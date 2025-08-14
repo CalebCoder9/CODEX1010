@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODEX 1010</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Courier New', Courier, monospace;
+        background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+        background-size: cover;
+        color: #00FF00; /* Matrix green */
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    header {
+        text-align: center;
+        padding: 20px;
+    }
+
+    header h1 {
+        font-size: 2.5em;
+        margin: 0;
+        font-weight: bold;
+        letter-spacing: 3px;
+    }
+
+    header p {
+        font-size: 1.2em;
+        margin: 5px 0 15px 0;
+        opacity: 0.8;
+    }
+
+    #posts {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .post {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        font-size: 0.9em;
+    }
+
+    .timestamp {
+        font-size: 0.7em;
+        color: #7FFF00;
+        display: block;
+        margin-top: 5px;
+        text-align: right;
+    }
+
+    #inputBar {
+        display: flex;
+        border-top: 2px solid #00FF00;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 8px;
+    }
+
+    #commentInput {
+        flex: 1;
+        padding: 10px;
+        font-size: 1em;
+        border: none;
+        outline: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #00FF00;
+    }
+
+    #sendButton {
+        background-color: #00FF00;
+        border: none;
+        padding: 10px 15px;
+        font-size: 1em;
+        cursor: pointer;
+        color: black;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>CODEX 1010</h1>
+    <p>Everything and Nothing</p>
+</header>
+
+<div id="posts">
+    <!-- Messages will appear here -->
+</div>
+
+<div id="inputBar">
+    <input type="text" id="commentInput" placeholder="Type a comment...">
+    <button id="sendButton">Send</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+        getFirestore,
+        collection,
+        addDoc,
+        serverTimestamp,
+        query,
+        orderBy,
+        onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // --- Your Firebase config ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1kHNk3_LQcL38sKzLoaZ4APLiUrPHa3M",
+        authDomain: "codex-1010-3bc28.firebaseapp.com",
+        projectId: "codex-1010-3bc28",
+        storageBucket: "codex-1010-3bc28.firebasestorage.app",
+        messagingSenderId: "1006996527999",
+        appId: "1:1006996527999:web:4e6c62d8a2af6ff050984a",
+        measurementId: "G-TXETYEEBD1"
+    };
+
+    // Init Firebase + Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const postsContainer = document.getElementById("posts");
+    const input = document.getElementById("commentInput");
+    const button = document.getElementById("sendButton");
+
+    // Render posts
+    function renderPosts(posts) {
+        postsContainer.innerHTML = "";
+        posts.forEach(p => {
+            const post = document.createElement("div");
+            post.classList.add("post");
+            post.innerHTML = `
+                ${p.text}
+                <span class="timestamp">
+                    ${p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
+                </span>
+            `;
+            postsContainer.appendChild(post);
+        });
+        postsContainer.scrollTop = postsContainer.scrollHeight;
+    }
+
+    // Listen for updates
+    const q = query(collection(db, "posts"), orderBy("createdAt", "asc"));
+    onSnapshot(q, (snapshot) => {
+        const posts = snapshot.docs.map(doc => doc.data());
+        renderPosts(posts);
+    });
+
+    // Add post to Firestore
+    async function addPost(text) {
+        if (!text.trim()) return;
+        await addDoc(collection(db, "posts"), {
+            text: text.trim(),
+            createdAt: serverTimestamp()
+        });
+    }
+
+    // Event listeners
+    button.addEventListener("click", () => {
+        addPost(input.value);
+        input.value = "";
+    });
+
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            addPost(input.value);
+            input.value = "";
+        }
+    });
+</script>
+
+</body>
+</html>
